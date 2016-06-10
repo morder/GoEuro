@@ -47,6 +47,36 @@
             style="@style/AutoCompleteText"
             />
 
+        <FrameLayout
+            android:id="@+id/calendar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="70dp"
+            >
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="30dp"
+                android:textSize="20sp"
+                android:textColor="#555555"
+                android:layout_gravity="center_vertical"
+                android:focusable="false"
+                android:clickable="false"
+                android:background="?attr/editTextBackground"
+                android:textAppearance="?android:attr/textAppearanceMediumInverse"
+                />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_menu_my_calendar"
+                android:layout_gravity="center_vertical|end"
+                android:contentDescription="@string/calendar" />
+
+        </FrameLayout>
+
         <Button
             android:id="@+id/search"
             android:layout_width="wrap_content"

@@ -1,7 +1,10 @@
 package com.test.yanis.goeuro;
 
 import android.Manifest;
+import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Paint;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -12,16 +15,24 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxbinding.widget.TextViewTextChangeEvent;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func2;
+import rx.functions.Func3;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,7 +46,11 @@ public class MainActivity extends AppCompatActivity {
     private MyAutoAdapter mToAdapter;
     private AutoCompleteTextView from;
     private AutoCompleteTextView to;
+    private View mCalendarFrame;
+    private TextView mDateView;
     private Button search;
+
+    private Calendar mCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
         from = (AutoCompleteTextView) findViewById(R.id.from);
         to = (AutoCompleteTextView) findViewById(R.id.to);
         search = (Button) findViewById(R.id.search);
+        mCalendarFrame = findViewById(R.id.calendar);
+        mDateView = (TextView) findViewById(R.id.date);
 
         from.setAdapter(mFromAdapter);
         to.setAdapter(mToAdapter);
@@ -69,6 +86,50 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+
+
+        Observable.merge(RxView.clicks(mCalendarFrame), RxView.clicks(mDateView))
+                .subscribe(new Action1<Void>() {
+
+                    private boolean mOk = false;
+
+                    final DatePickerDialog.OnDateSetListener datePicker = new DatePickerDialog.OnDateSetListener() {
+                        @Override
+                        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                            if (mOk) {
+                                mCalendar.set(Calendar.YEAR, year);
+                                mCalendar.set(Calendar.MONTH, monthOfYear);
+                                mCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                                String myFormat = "MM.dd.yyyy";
+                                SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.getDefault());
+                                mDateView.setText(sdf.format(mCalendar.getTime()));
+                                mOk = false;
+                            }
+                        }
+                    };
+
+                    DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == DialogInterface.BUTTON_POSITIVE){
+                                mOk = true;
+                            }
+                        }
+                    };
+
+                    @Override
+                    public void call(Void aVoid) {
+                        DatePickerDialog picker = new DatePickerDialog(MainActivity.this, datePicker,
+                                mCalendar.get(Calendar.YEAR),
+                                mCalendar.get(Calendar.MONTH),
+                                mCalendar.get(Calendar.DAY_OF_MONTH));
+                        picker.setButton(DialogInterface.BUTTON_POSITIVE, "OK", listener);
+                        picker.setButton(DialogInterface.BUTTON_NEGATIVE, "CANCEL", listener);
+                        picker.show();
+                    }
+                });
 
         search.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,11 +163,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mSubscription2 = Observable.combineLatest(
+                RxTextView.textChangeEvents(mDateView),
                 RxTextView.textChangeEvents(from),
-                RxTextView.textChangeEvents(to), new Func2<TextViewTextChangeEvent, TextViewTextChangeEvent, Boolean>() {
+                RxTextView.textChangeEvents(to), new Func3<TextViewTextChangeEvent, TextViewTextChangeEvent, TextViewTextChangeEvent, Boolean>() {
                     @Override
-                    public Boolean call(TextViewTextChangeEvent from, TextViewTextChangeEvent to) {
-                        return from.text().length() > 0 && to.text().length() > 0;
+                    public Boolean call(TextViewTextChangeEvent date, TextViewTextChangeEvent from, TextViewTextChangeEvent to) {
+                        return from.text().length() > 0 && to.text().length() > 0 && date.text().length() > 0;
                     }
                 })
                 .subscribe(new Action1<Boolean>() {

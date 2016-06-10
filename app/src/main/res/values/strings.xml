@@ -4,4 +4,5 @@
     <string name="enter_start_location">enter start location</string>
     <string name="enter_destination_location">enter destination location</string>
     <string name="search">search</string>
+    <string name="calendar">calendar</string>
 </resources>
